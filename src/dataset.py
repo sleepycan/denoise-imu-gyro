@@ -39,7 +39,7 @@ class BaseDataset(Dataset):
         self.min_train_freq = min_train_freq
         self.max_train_freq = max_train_freq
         self.uni = torch.distributions.uniform.Uniform(-torch.ones(1),
-            torch.ones(1))
+            torch.ones(1)) 
 
     def get_sequences(self, train_seqs, val_seqs, test_seqs):
         """Choose sequence list depending on dataset mode"""
@@ -73,7 +73,7 @@ class BaseDataset(Dataset):
         """Add Gaussian noise and bias to input"""
         noise = torch.randn_like(u)
         noise[:, :, :3] = noise[:, :, :3] * self.imu_std[0]
-        noise[:, :, 3:6] = noise[:, :, 3:6] * self.imu_std[1]
+        noise[:, :, 3:6] = noise[:, :, 3:6] * self.imu_std[1] 
 
         # bias repeatability (without in run bias stability)
         b0 = self.uni.sample(u[:, 0].shape).cuda()

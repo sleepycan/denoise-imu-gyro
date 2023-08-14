@@ -270,6 +270,9 @@ class GyroLearningBasedProcessing(LearningBasedProcessing):
             'yaws': [],
         }
         self.to_open_vins(dataset)
+
+        gyro_dic = {}
+
         for i, seq in enumerate(dataset.sequences):
             print('\n', 'Results for sequence ' + seq )
             self.seq = seq
@@ -283,12 +286,20 @@ class GyroLearningBasedProcessing(LearningBasedProcessing):
             self.raw_us, _ = dataset[i]
             N = self.net_us.shape[0]
             self.gyro_corrections =  (self.raw_us[:, :3] - self.net_us[:N, :3])
-            self.ts = torch.linspace(0, N*self.dt, N)
 
+
+            print("*************the shape:************")
+            print(np.shape(self.net_us[:,:3]))
+            print(np.shape(self.gyro_corrections))
+            gyro_dic[seq] = {
+                'corrected_gyro':self.net_us[:, :3],
+                'correction_gyro' : -self.gyro_corrections,
+            }
             self.convert()
-            self.plot_gyro()
-            self.plot_gyro_correction()
-            plt.show()
+        print(gyro_dic)
+        
+            
+        
 
     def to_open_vins(self, dataset):
         """
@@ -322,28 +333,8 @@ class GyroLearningBasedProcessing(LearningBasedProcessing):
         self.gyro_corrections *= l
         self.gt['rpys'] *= l
 
-    def integrate_with_quaternions_superfast(self, N, raw_us, net_us):
-        imu_qs = SO3.qnorm(SO3.qexp(raw_us[:, :3].cuda().double()*self.dt))
-        net_qs = SO3.qnorm(SO3.qexp(net_us[:, :3].cuda().double()*self.dt))
-        Rot0 = SO3.qnorm(self.gt['qs'][:2].cuda().double())
-        imu_qs[0] = Rot0[0]
-        net_qs[0] = Rot0[0]
-
-        N = np.log2(imu_qs.shape[0])
-        for i in range(int(N)):
-            k = 2**i
-            imu_qs[k:] = SO3.qnorm(SO3.qmul(imu_qs[:-k], imu_qs[k:]))
-            net_qs[k:] = SO3.qnorm(SO3.qmul(net_qs[:-k], net_qs[k:]))
-
-        if int(N) < N:
-            k = 2**int(N)
-            k2 = imu_qs[k:].shape[0]
-            imu_qs[k:] = SO3.qnorm(SO3.qmul(imu_qs[:k2], imu_qs[k:]))
-            net_qs[k:] = SO3.qnorm(SO3.qmul(net_qs[:k2], net_qs[k:]))
-
-        imu_Rots = SO3.from_quaternion(imu_qs).float()
-        net_Rots = SO3.from_quaternion(net_qs).float()
-        return net_qs.cpu(), imu_Rots, net_Rots
+  
+  
 
     def plot_gyro(self):
         N = self.raw_us.shape[0]
