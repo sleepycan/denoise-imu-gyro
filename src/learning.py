@@ -17,6 +17,7 @@ from src.utils import pload, pdump, yload, ydump, mkdir, bmv
 from src.utils import bmtm, bmtv, bmmt
 from datetime import datetime
 from src.lie_algebra import SO3, CPUSO3
+import pickle
 
 
 class LearningBasedProcessing:
@@ -295,8 +296,11 @@ class GyroLearningBasedProcessing(LearningBasedProcessing):
                 'corrected_gyro':self.net_us[:, :3],
                 'correction_gyro' : -self.gyro_corrections,
             }
+
             self.convert()
         print(gyro_dic)
+        with open("gyro_dic.pkl", "wb") as f:
+            pickle.dump(gyro_dic.pkl, f)
         
             
         
