@@ -7,7 +7,7 @@ import src.dataset as ds
 import numpy as np
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
-data_dir = '/path/to/EUROC/dataset'
+data_dir = '/home/yuhneg/project/folder—can/denoise-imu-gyro/data'
 # test a given network
 # address = os.path.join(base_dir, 'results/EUROC/2020_02_18_16_52_55/')
 # or test the last trained network

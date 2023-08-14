@@ -1,6 +1,8 @@
 
 import torch
 import time
+import copy
+import pypose as pp
 import matplotlib.pyplot as plt
 plt.rcParams["legend.loc"] = "upper right"
 plt.rcParams['axes.titlesize'] = 'x-large'
@@ -286,22 +288,30 @@ class GyroLearningBasedProcessing(LearningBasedProcessing):
             self.net_us = pload(self.address, seq, 'results.p')['hat_xs']
             self.raw_us, _ = dataset[i]
             N = self.net_us.shape[0]
-            self.gyro_corrections =  (self.raw_us[:, :3] - self.net_us[:N, :3])
-
-
-            print("*************the shape:************")
-            print(np.shape(self.net_us[:,:3]))
-            print(np.shape(self.gyro_corrections))
+            self.gyro_corrections =  (self.net_us[:N, :3]-self.raw_us[:, :3])
+            self.ts = torch.linspace(0, N*self.dt, N)
+ 
+            ## TODO: to pypose
+            net_out = pp.so3(self.net_us[:, :3]).Exp() # pp.so3
+            raw_out = pp.so3(self.raw_us[:, :3]).Exp()
+            ground_truth_out = pp.so3(self.gt['rpys'][:N]).Exp()
+            
+            # gt = pp
             gyro_dic[seq] = {
-                'corrected_gyro':self.net_us[:, :3],
-                'correction_gyro' : -self.gyro_corrections,
+                'gyro_corrected':copy.deepcopy(self.net_us[:, :3]),
+                'correction_gyro':copy.deepcopy(self.gyro_corrections),
+                'correction_acc': copy.deepcopy(torch.zeros_like(self.gyro_corrections)),
+                'gt_Rots':copy.deepcopy(self.gt['Rots'][:N].cuda()),
+                'ts' : copy.deepcopy(self.ts)
             }
-
             self.convert()
-        print(gyro_dic)
-        with open("gyro_dic.pkl", "wb") as f:
-            pickle.dump(gyro_dic.pkl, f)
+
+        filename_correction = 'gyro_dic.pkl'
+        with open(filename_correction, 'wb') as file:
+            pickle.dump(gyro_dic,file)
         
+        print(gyro_dic)
+
             
         
 
